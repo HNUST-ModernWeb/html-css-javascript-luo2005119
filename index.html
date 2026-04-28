@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人信息卡片</title>
+    <style>
+        /* 全局样式与居中显示 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* 卡片容器：阴影与圆角 */
+        .card {
+            background: #fff;
+            width: 320px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 头像区域 */
+        .avatar-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #avatar-img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #e0e0e0;
+            margin-bottom: 12px;
+        }
+
+        /* 按钮样式与交互效果 */
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+
+        #upload-btn {
+            background-color: #6c757d;
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        #upload-btn:hover {
+            background-color: #5a6268;
+        }
+
+        /* 输入框美化 */
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.25);
+        }
+
+        /* 文本展示样式 */
+        #display-name {
+            margin: 10px 0;
+            color: #222;
+            font-size: 24px;
+        }
+        #display-bio {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>个人信息卡片</h1>
+    
+    <div class="card">
+        <!-- 头像模块 -->
+        <div class="avatar-container">
+            <img id="avatar-img" src="https://via.placeholder.com/100?text=Avatar" alt="个人头像">
+            <!-- 隐藏的真实文件上传控件 -->
+            <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+            <button id="upload-btn">更换头像</button>
+        </div>
+        
+        <!-- 展示模式 -->
+        <div id="display-mode">
+            <h2 id="display-name">张三</h2>
+            <p id="display-bio">你好！我是一名前端开发者，喜欢用代码创造有趣的页面。</p>
+            <button id="edit-btn">编辑信息</button>
+        </div>
+
+        <!-- 编辑模式 (默认隐藏) -->
+        <div id="edit-mode" style="display: none;">
+            <input type="text" id="input-name" placeholder="请输入您的姓名">
+            <textarea id="input-bio" rows="4" placeholder="请输入您的个人简介"></textarea>
+            <button id="save-btn">保存</button>
+        </div>
+    </div>
+
+    <script>
+        // 获取 DOM 元素
+        const avatarImg = document.getElementById('avatar-img');
+        const uploadBtn = document.getElementById('upload-btn');
+        const avatarUpload = document.getElementById('avatar-upload');
+        
+        const displayMode = document.getElementById('display-mode');
+        const editMode = document.getElementById('edit-mode');
+        
+        const displayName = document.getElementById('display-name');
+        const displayBio = document.getElementById('display-bio');
+        const editBtn = document.getElementById('edit-btn');
+        
+        const inputName = document.getElementById('input-name');
+        const inputBio = document.getElementById('input-bio');
+        const saveBtn = document.getElementById('save-btn');
+
+        // 1. 头像上传与实时预览功能
+        uploadBtn.addEventListener('click', () => {
+            avatarUpload.click(); // 触发隐藏的文件输入框
+        });
+
+        avatarUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Img = e.target.result;
+                    avatarImg.src = base64Img; // 将图片转为 Base64 并更新 img 的 src
+                    
+                    // 将头像数据保存到 localStorage
+                    try {
+                        localStorage.setItem('cardAvatar', base64Img);
+                    } catch (error) {
+                        console.warn('图片太大，无法保存到 localStorage', error);
+                        alert('图片尺寸过大，无法在本地保存，请选择小一些的图片。');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. 切换到编辑模式
+        editBtn.addEventListener('click', () => {
+            // 将当前展示的文本填入输入框中
+            inputName.value = displayName.textContent;
+            inputBio.value = displayBio.textContent;
+            
+            // 切换视图显示状态
+            displayMode.style.display = 'none';
+            editMode.style.display = 'block';
+        });
+
+        // 3. 保存修改并返回展示模式
+        saveBtn.addEventListener('click', () => {
+            // 将输入框的内容更新到展示节点（处理空输入情况）
+            const newName = inputName.value.trim() || '未命名';
+            const newBio = inputBio.value.trim() || '暂无简介';
+            
+            displayName.textContent = newName;
+            displayBio.textContent = newBio;
+            
+            // 保存数据到 localStorage
+            localStorage.setItem('cardName', newName);
+            localStorage.setItem('cardBio', newBio);
+            
+            // 切换回展示视图
+            editMode.style.display = 'none';
+            displayMode.style.display = 'block';
+        });
+
+        // 4. 页面加载时从 localStorage 恢复数据
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('cardName');
+            const savedBio = localStorage.getItem('cardBio');
+            const savedAvatar = localStorage.getItem('cardAvatar');
+
+            if (savedName) displayName.textContent = savedName;
+            if (savedBio) displayBio.textContent = savedBio;
+            if (savedAvatar) avatarImg.src = savedAvatar;
+        });
+    </script>
+</body>
+</html>
